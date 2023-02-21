@@ -2,7 +2,6 @@
   "name": "juienpro/traitor",
   "description": "Add a trait use statement to existing PHP class",
   "keywords": ["PHP", "trait", "add"],
-  "version": "1.0.0",
   "license": "MIT",
   "support": {
     "issues": "https://github.com/kkszymanowski/traitor/issues",
