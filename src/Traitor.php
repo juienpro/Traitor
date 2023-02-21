@@ -26,6 +26,16 @@ class Traitor
     }
 
     /**
+     * @param  string  $trait
+     * @return TraitUserRemover
+     */
+    public static function removeTrait($trait)
+    {
+        $instance = new TraitUseRemover();
+        return $instance->removeTraits([$trait]);
+    }
+
+    /**
      * @param  array  $traits
      * @return TraitUseAdder
      */
@@ -34,6 +44,17 @@ class Traitor
         $instance = new TraitUseAdder();
 
         return $instance->addTraits($traits);
+    }
+
+    /**
+     * @param  array  $traits
+     * @return TraitUseRemover
+     */
+    public static function removeTraits($traits)
+    {
+        $instance = new TraitUserRemover();
+
+        return $instance->removeTraits($traits);
     }
 
     /**

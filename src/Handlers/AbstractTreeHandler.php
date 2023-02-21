@@ -81,13 +81,25 @@ class AbstractTreeHandler implements Handler
     public function handle()
     {
         $this->buildSyntaxTree()
-             ->addTraitImport()
-             ->buildSyntaxTree()
-             ->addTraitUseStatement();
+            ->addTraitImport()
+            ->buildSyntaxTree()
+            ->addTraitUseStatement();
 
         return $this;
     }
 
+    /**
+     * @return $this
+     */
+    public function handleRemove()
+    {
+        $this->buildSyntaxTree()
+            ->removeTraitImport()
+            ->buildSyntaxTree()
+            ->removeTraitUseStatement();
+
+        return $this;
+    }
     /**
      * @return string
      */
@@ -112,10 +124,10 @@ class AbstractTreeHandler implements Handler
     protected function buildSyntaxTree()
     {
         $this->parseContent()
-             ->retrieveNamespace()
-             ->retrieveImports()
-             ->retrieveClasses()
-             ->findClassDefinition();
+            ->retrieveNamespace()
+            ->retrieveImports()
+            ->retrieveClasses()
+            ->findClassDefinition();
 
         return $this;
     }
@@ -132,18 +144,37 @@ class AbstractTreeHandler implements Handler
         $lastImport = $this->getLastImport();
         if ($lastImport === false) {
             $lineNumber = $this->classAbstractTree->getLine() - 1;
-            $newImport = 'use '.$this->trait.';'.$this->lineEnding;
+            $newImport = 'use ' . $this->trait . ';' . $this->lineEnding;
 
             array_splice($this->content, $lineNumber, 0, $this->lineEnding);
         } else {
             $lineNumber = $this->getLastImport()->getAttribute('endLine');
-            $newImport = 'use '.$this->trait.';'.$this->lineEnding;
+            $newImport = 'use ' . $this->trait . ';' . $this->lineEnding;
         }
 
         array_splice($this->content, $lineNumber, 0, $newImport);
 
         return $this;
     }
+
+    /**
+     * @return $this
+     */
+    protected function removeTraitImport()
+    {
+        if (!$this->hasTraitImport()) {
+            return $this;
+        }
+
+        foreach ($this->content as $i => $line) {
+            if (trim($line) === 'use ' . $this->trait . ';') {
+                array_splice($this->content, $i, 1);
+            }
+        }
+        return $this;
+    }
+
+
 
     /**
      * @return $this
@@ -158,9 +189,27 @@ class AbstractTreeHandler implements Handler
 
         $line = $this->getNewTraitUseLine();
 
-        $newTraitUse = static::getIndentation($this->content[$line]).'use '.$this->traitShortName.';'.$this->lineEnding;
+        $newTraitUse = static::getIndentation($this->content[$line]) . 'use ' . $this->traitShortName . ';' . $this->lineEnding;
 
         array_splice($this->content, $line, 0, $newTraitUse);
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    protected function removeTraitUseStatement()
+    {
+        if (!$this->alreadyUsesTrait()) {
+            return $this;
+        }
+
+        foreach ($this->content as $i => $line) {
+            if (trim($line) === 'use ' . $this->traitShortName . ';') {
+                array_splice($this->content, $i, 1);
+            }
+        }
 
         return $this;
     }
@@ -178,7 +227,7 @@ class AbstractTreeHandler implements Handler
             $parser = $this->getParser();
             $this->syntaxTree = $parser->parse($flatContent);
         } catch (Error $e) {
-            throw new Exception('Error on parsing '.$this->classShortName." class\n".$e->getMessage());
+            throw new Exception('Error on parsing ' . $this->classShortName . " class\n" . $e->getMessage());
         }
 
         return $this;
@@ -198,9 +247,9 @@ class AbstractTreeHandler implements Handler
             }
         }
 
-        if (! $namespaceNode) {
-//            var_dump($this->syntaxTree);die;
-//            throw new Exception("Could not locate namespace definition for class '".$this->classShortName."'");
+        if (!$namespaceNode) {
+            //            var_dump($this->syntaxTree);die;
+            //            throw new Exception("Could not locate namespace definition for class '".$this->classShortName."'");
         }
 
         $this->namespace = $namespaceNode;
@@ -278,7 +327,8 @@ class AbstractTreeHandler implements Handler
         /** @var TraitUse $statement */
         foreach ($traitUses as $statement) {
             foreach ($statement->traits as $traitUse) {
-                if ($traitUse->toString() == $this->trait
+                if (
+                    $traitUse->toString() == $this->trait
                     || $traitUse->toString() == $this->traitShortName
                 ) {
                     return true;
@@ -304,7 +354,7 @@ class AbstractTreeHandler implements Handler
             }
         }
 
-        throw new Exception('Class '.$this->classShortName.' not found');
+        throw new Exception('Class ' . $this->classShortName . ' not found');
     }
 
     /**
@@ -341,12 +391,12 @@ class AbstractTreeHandler implements Handler
             if (substr($trimmedLine, strlen($trimmedLine) - 2) == '{}') {
                 $trimmedLine = rtrim(substr($trimmedLine, 0, strlen($trimmedLine) - 2));
                 if (strlen($trimmedLine) == 0) {
-                    $this->content[$line] = '{'.$this->lineEnding;
-                    array_splice($this->content, $line + 1, 0, '}'.$this->lineEnding);
+                    $this->content[$line] = '{' . $this->lineEnding;
+                    array_splice($this->content, $line + 1, 0, '}' . $this->lineEnding);
                 } else {
-                    $this->content[$line] = $trimmedLine.$this->lineEnding;
-                    array_splice($this->content, $line + 1, 0, '{'.$this->lineEnding);
-                    array_splice($this->content, $line + 2, 0, '}'.$this->lineEnding);
+                    $this->content[$line] = $trimmedLine . $this->lineEnding;
+                    array_splice($this->content, $line + 1, 0, '{' . $this->lineEnding);
+                    array_splice($this->content, $line + 2, 0, '}' . $this->lineEnding);
                 }
 
                 $this->buildSyntaxTree();
@@ -395,7 +445,7 @@ class AbstractTreeHandler implements Handler
     {
         $refParser = new \ReflectionClass('\PhpParser\Parser');
 
-        if (! $refParser->isInterface()) {
+        if (!$refParser->isInterface()) {
             // If we are running nikic/php-parser 1.*
             return new \PhpParser\Parser(new Lexer());
         } else {
