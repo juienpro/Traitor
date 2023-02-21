@@ -4,7 +4,7 @@
 [![Latest Stable Version](https://poser.pugx.org/kkszymanowski/traitor/v/stable)](https://packagist.org/packages/kkszymanowski/traitor)
 [![License](https://poser.pugx.org/kkszymanowski/traitor/license)](https://packagist.org/packages/kkszymanowski/traitor)
 
-A PHP package for automatically adding a `trait use statement` to a given class.
+A PHP package for automatically adding/removing a `trait use statement` to a given class.
 
 ## Installation
 Via composer:
@@ -18,6 +18,7 @@ composer require kkszymanowski/traitor
 use Traitor\Traitor;
 
 Traitor::addTrait(FooTrait::class)->toClass(FooClass:class);
+Traitor::removeTrait(FooTrait::class)->toClass(FooClass:class);
 ```
 - Add multiple traits:
 ```php
@@ -29,12 +30,23 @@ Traitor::addTraits([
     BazTrait::class
 ])->toClass(FooClass::class);
 
+
 //or
 
 Traitor::addTrait(FooTrait::class)
        ->addTrait(BarTrait::class)
        ->addTrait(BazTrait::class)
        ->toClass(FooClass::class);
+```
+- Remove a trait 
+```php
+Traitor::removeTrait(FooTrait::class)->toClass(FooClass:class);
+
+Traitor::removeTraits([
+    FooTrait::class,
+    BarTrait::class,
+    BazTrait::class
+])->toClass(FooClass::class);
 ```
 - Check if class already uses trait:
 ```php
